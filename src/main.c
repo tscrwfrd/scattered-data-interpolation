@@ -37,7 +37,9 @@
 
 
 coordT* create_points();
-void delaunay_triangles();
+double* create_func_values();
+void linear_interp2d_facet(qhT *qh, int dims, double* f_val);
+void print_all_facets(qhT *qh);
   
 int main()
 {
@@ -65,6 +67,8 @@ int main()
    
    // grab given grid points
    coordT* allpts = create_points();
+   // make some values
+   double* f_val = create_func_values();
    
    // not sure what this means yet
    qh->NOerrexit = False;
@@ -89,35 +93,44 @@ int main()
    
    // ---------- FINDING DELAUNAY TRIANGLE -----------
    
-   coordT single_point[2];
-   realT bestdist;
-   boolT isoutside;
+   // coordT single_point[2];
+   // realT bestdist;
+   // boolT isoutside;
    
-   // find triangle for this point
-   single_point[0] = 3.0;
-   single_point[1] = 0.0;
+   // // find triangle for this point
+   // single_point[0] = 3.0;
+   // single_point[1] = 0.0;
    
-   // bumps-up dimension to calculate projections
-   qh_setdelaunay(qh, dims+1, 1, single_point);
+   // // bumps-up dimension to calculate projections
+   // qh_setdelaunay(qh, dims+1, 1, single_point);
    
-   // find facet that contains point
-   facetT *facet = qh_findbestfacet(qh, single_point, True, &bestdist, &isoutside);
+   // // find facet that contains point
+   // facetT *facet = qh_findbestfacet(qh, single_point, True, &bestdist, &isoutside);
    
-   vertexT *vertex, **vertexp;
-   int k;
    
-   FOREACHvertex_(facet->vertices) {
-    for (k=0; k < dims; k++)
-      printf("%5.2f ", vertex->point[k]);
-    printf("\n");
-  }
-  printf(" facet id: %u,  \n", facet->id);
+   linear_interp2d_facet(qh, dims, f_val);
+   
+   // printf(" facet id: %u,  \n", facet->id);
   
-  
-  // Iterating through all valid triangles
-  facet = qh->facet_list;
-  unsigned int ct = 0;
-  while (facet->id != 0) {
+   print_all_facets(qh);
+   
+   free(allpts);
+
+}
+
+/**
+*
+*
+*/
+void print_all_facets(qhT *qh)
+{
+   facetT *facet;
+   vertexT *vertex;
+   
+   // Iterating through all valid triangles
+   facet = qh->facet_list;
+   unsigned int ct = 0;
+   while (facet->id != 0) {
 
     // only want triangle projected on 2D surface
     if (!facet->upperdelaunay) {
@@ -137,22 +150,70 @@ int main()
     }
     facet = facet->next;
     
-  }
-   
-   free(allpts);
-
+   }
+  
 }
 
 
-void delaunay_triangles()
+/**
+* Linear interpolation using barycentric coordinates
+*
+*/
+void linear_interp2d_facet(qhT *qh, int dims, double* f_val)
 {
+   vertexT *vertex;
+   coordT single_point[2];
+   realT bestdist;
+   boolT isoutside;
+   
+   // find triangle for this point
+   single_point[0] = 3.0;
+   single_point[1] = 0.0;
+   
+   // bumps-up dimension to calculate projections
+   qh_setdelaunay(qh, dims+1, 1, single_point);
+   
+   // find facet that contains point
+   facetT *facet = qh_findbestfacet(qh, single_point, True, &bestdist, &isoutside);
 
+   double x = single_point[0];
+   double y = single_point[1];
 
+   vertex = facet->vertices->e[0].p;
+   double x1 = vertex->point[0];
+   double y1 = vertex->point[1];
+
+   vertex = facet->vertices->e[1].p;
+   double x2 = vertex->point[0];
+   double y2 = vertex->point[1];
+
+   vertex = facet->vertices->e[2].p;
+   double x3 = vertex->point[0];
+   double y3 = vertex->point[1];
+
+   printf(" ><><><><> %lf, %lf, %lf \n", x1, x2, x3);
+   printf(" <><><><>< %lf, %lf, %lf \n", y1, y2, y3);
+
+   double dnmr = y2*x1 - y2*x3 -y3*x1 + x3*y1 - x2*y1 + x2*y3;
+
+   double lamda1 = y2*x - y2*x3 - y3*x + x2*y - x2*y + x2*y3;
+   lamda1 = lamda1 / dnmr;
+
+   double lamda2 = y3*x - y1*x + y1*x3 + x1*y - x1*y3 - x3*y;
+   lamda2 = lamda2 / dnmr;
+
+   double lamda3 = 1 - lamda1 - lamda2;
+
+   printf(" <><><> %lf, %lf, %lf \n", lamda1, lamda2, lamda3);
+
+   // apply barycentric coordinates
+   double f = lamda1*f_val[0] + lamda2*f_val[1] + lamda3*f_val[2];
+   printf(" <><> interp: %lf \n", f);
 
 }
 
 /**
-* creating 2D points
+* Test function that creates 2D points. 
 */
 coordT* create_points()
 {
@@ -182,7 +243,30 @@ coordT* create_points()
    T[12] = 3.0;
    T[13] = -2.0;
 
+   
+
    return T;
+}
+
+/**
+ * Test function that creates function values 
+ * 
+ * 
+ */
+double* create_func_values()
+{
+   double* f_val = malloc(sizeof(double*)*7);
+
+   f_val[0] = 3.4;
+   f_val[1] = 3.4;
+   f_val[2] = 3.4;
+   f_val[3] = 3.4;
+   f_val[4] = 3.4;
+   f_val[5] = 3.4;
+   f_val[6] = 3.4;
+   
+   return f_val;
+
 }
 
 
