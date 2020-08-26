@@ -1,51 +1,80 @@
 
+
 #include "stdio.h"
 #define CMDOPTS 50
+#define DIMS 2
 
 
-   //   EXAMPLE INPUT POINTS AND FACETS
-   // +++++++++++++++++++++++++++++++++++++++++++++++++
-   //
-   //           *(0,6)
-   //
-   //
-   //                           * (3,4)
-   //
-   //
-   //             * (1,3)
-   //
-   //                                * (4,2)
-   //
-   //                    *(2,1)
-   //
-   //                             X (3, 0) <<-- point location
-   //     *
-   //   (-1,-1)
-   //
-   //                           * (3,-2)
-   //
-   // +++++++++++++++++++++++++++++++++++++++++++++++++
-   //
-   //  FACETS: (1, 3) -> (0, 6) -> (-1,-1)
-   //  FACETS: (3, 4) -> (1, 3) -> ( 0, 6)
-   //  FACETS: (2, 1) -> (3,-2) -> ( 4, 2)
-   //  FACETS: (2, 1) -> (3,-2) -> (-1,-1)
-   //  FACETS: (2, 1) -> (1, 3) -> (-1,-1)
-   //  FACETS: (2, 1) -> (3, 4) -> ( 1, 3)
-   //  FACETS: (2, 1) -> (3, 4) -> ( 4, 2)
-   //  ======================================
+//   EXAMPLE INPUT POINTS AND FACETS
+// +++++++++++++++++++++++++++++++++++++++++++++++++
+//
+//           *(0,6)
+//
+//
+//                           * (3,4)
+//
+//
+//             * (1,3)
+//
+//                                * (4,2)
+//
+//                    *(2,1)
+//
+//                             X (3, 0) <<-- point location
+//     *
+//   (-1,-1)
+//
+//                           * (3,-2)
+//
+// +++++++++++++++++++++++++++++++++++++++++++++++++
+//
+//  FACETS: (1, 3) -> (0, 6) -> (-1,-1)
+//  FACETS: (3, 4) -> (1, 3) -> ( 0, 6)
+//  FACETS: (2, 1) -> (3,-2) -> ( 4, 2)
+//  FACETS: (2, 1) -> (3,-2) -> (-1,-1)
+//  FACETS: (2, 1) -> (1, 3) -> (-1,-1)
+//  FACETS: (2, 1) -> (3, 4) -> ( 1, 3)
+//  FACETS: (2, 1) -> (3, 4) -> ( 4, 2)
+//  ======================================
 
 
-coordT* create_points();
+double* create_points();
 double* create_func_values();
-void linear_interp2d_facet(qhT *qh, int dims, double* f_val);
-void print_all_facets(qhT *qh);
+void griddata(double* points, double* values, double fill_value, int num_pts);
+void _linear_interp2d_facet(qhT *qh, int dims, double* f_val);
+void _print_all_facets(qhT *qh);
+void _qhull(double* points, double* values, double fill_value, int num_pts);
   
 int main()
 {
+   printf("\nNew approach... \n\n");
 
-   printf(" \n\n GET IT ON!! \n\n ");
-   
+   double* pts = create_points();
+   double* f_val = create_func_values();
+   double fill_value = 3.5;
+
+   griddata(pts, f_val, fill_value, 7);
+
+}
+
+/**
+ * Entry point and wrapper function to QHull and linear interpolation
+ * 
+ */
+void griddata(double* points, double* values, double fill_value, int num_pts)
+{
+
+   _qhull(points, values, fill_value, num_pts);
+
+}
+
+/**
+ * 
+ * 
+ * 
+ */
+void _qhull(double* points, double* values, double fill_value, int num_pts)
+{
    // new instance for qhull
    qhT qh_qh;
    qhT *qh= &qh_qh;
@@ -62,14 +91,6 @@ int main()
    qh_init_A(qh, stdin, stdout, stderr, 0, NULL);
    int exitcode = setjmp(qh->errexit);
    
-   int num_points = 7;
-   int dims = 2;
-   
-   // grab given grid points
-   coordT* allpts = create_points();
-   // make some values
-   double* f_val = create_func_values();
-   
    // not sure what this means yet
    qh->NOerrexit = False;
 
@@ -80,49 +101,32 @@ int main()
    
    // true for delaunay and will aloow read-in points
    qh->PROJECTdelaunay = True;
+
+   coordT* allpts = points;
    
    // second initialization with points
-   qh_init_B(qh, allpts, num_points, dims, ismalloc);
+   qh_init_B(qh, allpts, num_pts, DIMS, ismalloc);
    
    // convex hull
    qh_qhull(qh);
    
    // triangluate hull points
    qh_triangulate(qh);
-   
-   
-   // ---------- FINDING DELAUNAY TRIANGLE -----------
-   
-   // coordT single_point[2];
-   // realT bestdist;
-   // boolT isoutside;
-   
-   // // find triangle for this point
-   // single_point[0] = 3.0;
-   // single_point[1] = 0.0;
-   
-   // // bumps-up dimension to calculate projections
-   // qh_setdelaunay(qh, dims+1, 1, single_point);
-   
-   // // find facet that contains point
-   // facetT *facet = qh_findbestfacet(qh, single_point, True, &bestdist, &isoutside);
-   
-   
-   linear_interp2d_facet(qh, dims, f_val);
-   
-   // printf(" facet id: %u,  \n", facet->id);
-  
-   print_all_facets(qh);
+
+   // interpolate with known point values
+   _linear_interp2d_facet(qh, DIMS, values);
+     
+   _print_all_facets(qh);
    
    free(allpts);
-
+   
 }
 
 /**
 *
 *
 */
-void print_all_facets(qhT *qh)
+void _print_all_facets(qhT *qh)
 {
    facetT *facet;
    vertexT *vertex;
@@ -159,7 +163,7 @@ void print_all_facets(qhT *qh)
 * Linear interpolation using barycentric coordinates
 *
 */
-void linear_interp2d_facet(qhT *qh, int dims, double* f_val)
+void _linear_interp2d_facet(qhT *qh, int dims, double* f_val)
 {
    vertexT *vertex;
    coordT single_point[2];
@@ -215,12 +219,12 @@ void linear_interp2d_facet(qhT *qh, int dims, double* f_val)
 /**
 * Test function that creates 2D points. 
 */
-coordT* create_points()
+double* create_points()
 {
 
-   coordT* T;
+   double* T;
 
-   T = malloc(sizeof(coordT*)*14);
+   T = malloc(sizeof(double*)*14);
    
    T[0] = 0.0;
    T[1] = 6.0;
@@ -268,5 +272,7 @@ double* create_func_values()
    return f_val;
 
 }
+
+
 
 
