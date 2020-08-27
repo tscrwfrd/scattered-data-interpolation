@@ -9,11 +9,11 @@ functionality. Current devlopement efforts is only on linux and tested with gcc 
 
 The following is necessary to use SDI
 
-- [GNU Make][gmake] will display a link.
+- [GNU Make][gmake] 
 
-- [GCC compiler][gcc] will display a link.
+- [GCC compiler][gcc]
 
-- [QHull][qhull] will display a link.
+- [QHull][qhull]
 
 
 [gmake]: https://www.gnu.org/software/make/
