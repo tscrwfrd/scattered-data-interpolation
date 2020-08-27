@@ -5,7 +5,8 @@ LFLAGS  = -L../libs/qhull-2020.2/lib -lqhull_r -lqhullstatic_r -lqhullstatic -lm
 #OUTPUT  = bin/libgriddata.so
 OUTPUT  = sdi.exe
 OBJECTS = \
-	obj/main.o 
+	obj/interpolation.o \
+	obj/main.o
 
 all: $(OBJECTS)
 	mkdir -p bin
@@ -17,6 +18,11 @@ obj/main.o: src/main.c
 	mkdir -p bin
 	mkdir -p obj
 	$(CC) $(FLAGS) src/main.c -o obj/main.o
+
+obj/interpolation.o: src/interpolation.c
+	mkdir -p bin
+	mkdir -p obj
+	$(CC) $(FLAGS) src/interpolation.c -o obj/interpolation.o
 
 clean:
 	rm -Rf $(OUTPUT) $(OBJECTS)
