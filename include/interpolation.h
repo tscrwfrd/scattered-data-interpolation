@@ -1,8 +1,26 @@
 #ifndef _INTERPOLATE_H
 #define _INTERPOLATE_H
 
-void griddata(double* points, double* values, double fill_value, int num_pts);
-void _linear_interp2d_facet(qhT *qh, int dims, double* f_val);
-void _qhull(double* points, double* values, double fill_value, int num_pts);
+int griddata(double* points   , 
+             double* values   , 
+             int num_pts      , 
+             double* ipoints  , 
+             double* ivalues  , 
+             int inum_pts     , 
+             double fill_value);
+void _linear_interp2d_facet(qhT *qh, 
+                            double* ipoints, 
+                            double* ipval,
+                            int inum_pts, 
+                            double* pval,
+                            double fillvalue);
+int _qhull_QVnd(double* points, 
+                double* values,
+                int num_pts,
+                double* ipoints, 
+                double* ivalues,
+                int inum_pts,
+                double fill_value);
+void _print_all_facets(qhT *qh);
 
 #endif

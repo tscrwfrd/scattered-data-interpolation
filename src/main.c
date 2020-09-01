@@ -41,53 +41,34 @@ void _print_all_facets(qhT *qh);
   
 int main()
 {
-   printf("\nNew approach... \n\n");
 
    double* pts = create_points();
-   double* f_val = create_func_values();
-   double fill_value = 3.5;
-
-   griddata(pts, f_val, fill_value, 7);
-
-}
-
-
-/**
-*
-* Helper function that prints all triangles within convex hull
-* @param   qh
-*/
-void _print_all_facets(qhT *qh)
-{
-   facetT *facet;
-   vertexT *vertex;
+   double* pval = create_func_values();
+   double fill_value = 9.5;
    
-   // Iterating through all valid triangles
-   facet = qh->facet_list;
-   unsigned int ct = 0;
-   while (facet->id != 0) {
+   double* ipts = malloc(sizeof(double*)*6);
+   ipts[0] = 3.0;
+   ipts[1] = 0.0;
+   ipts[2] = 1.0;
+   ipts[3] = 4.2;
+   ipts[4] = 1.0;
+   ipts[5] = 40.2;
+   
+   double* ipval = malloc(sizeof(double*)*2);
+   ipval[0] = 0.0;
+   ipval[1] = 0.0;
+   ipval[2] = 0.0;
+   
 
-    // only want triangle projected on 2D surface
-    if (!facet->upperdelaunay) {
+   griddata(pts, pval, 7, ipts, ipval, 3, fill_value);
+   
+   printf("v1: %lf \n", ipval[0]);
+   printf("v2: %lf \n", ipval[1]);
+   printf("v3: %lf \n", ipval[2]);
+   
 
-      printf("\nfacet id: %u,  count: %u \n", facet->id, ct);
-      
-      vertex = facet->vertices->e[0].p;
-      printf("0 vertex coords: %lf, %lf  \n", vertex->point[0], vertex->point[1]);
-
-      vertex = facet->vertices->e[1].p;
-      printf("1 vertex coords: %lf, %lf  \n", vertex->point[0], vertex->point[1]);
-
-      vertex = facet->vertices->e[2].p;
-      printf("2 vertex coords: %lf, %lf  \n", vertex->point[0], vertex->point[1]);
-
-      ct = ct + 1;
-    }
-    facet = facet->next;
-    
-   }
-  
 }
+
 
 /**
 * Test function that creates 2D points. 
@@ -96,8 +77,9 @@ double* create_points()
 {
 
    double* T;
+   int num_pts = 14;
 
-   T = malloc(sizeof(double*)*14);
+   T = malloc(sizeof(double*)*num_pts);
    
    T[0] = 0.0;
    T[1] = 6.0;
@@ -119,8 +101,6 @@ double* create_points()
    
    T[12] = 3.0;
    T[13] = -2.0;
-
-   
 
    return T;
 }
