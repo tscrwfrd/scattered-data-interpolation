@@ -136,7 +136,6 @@ void _linear_interp2d_facet(qhT *qh,
    coordT single_point[2];
    realT bestdist;
    boolT isoutside;
-   int rtn_code = 0;
    int ncoords = inum_pts*2;
 
    for(int i = 0; i < ncoords; i+=2 ){
@@ -206,12 +205,11 @@ void _linear_interp2d_facet(qhT *qh,
      
       } else {
       
-         double x = single_point[0];
-         double y = single_point[1];
-      
          ipval[idx] = fill_value;
          
          #if DPRINT
+            double x = single_point[0];
+            double y = single_point[1];
             printf("OUTSIDE point: (%lf, %lf) \n", x, y );
             printf(" -- fill value: %lf \n", fill_value);
          #endif
