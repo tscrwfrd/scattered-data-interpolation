@@ -1,6 +1,7 @@
 #include "../include/interpolation.h"
 #define CMDOPTS 50
 #define DIMS2D 2
+#define DPRINT 0
 
 
 /**
@@ -102,9 +103,9 @@ int _qhull_QVnd(double* points,
    // interpolate with known point values
    _linear_interp2d_facet(qh, ipoints, ivalues, inum_pts, values, fill_value);
      
-   _print_all_facets(qh);
-   
-   free(allpts);
+   #if DPRINT
+      _print_all_facets(qh);
+   #endif
    
    if(exitcode < 0)
       return -1;
@@ -158,14 +159,18 @@ void _linear_interp2d_facet(qhT *qh,
          vertex = facet->vertices->e[0].p;
          double x1 = vertex->point[0];
          double y1 = vertex->point[1];
+         double f1 = pval[qh_pointid(qh, vertex->point)];
 
          vertex = facet->vertices->e[1].p;
          double x2 = vertex->point[0];
          double y2 = vertex->point[1];
+         double f2 = pval[qh_pointid(qh, vertex->point)];
 
          vertex = facet->vertices->e[2].p;
          double x3 = vertex->point[0];
          double y3 = vertex->point[1];
+         double f3 = pval[qh_pointid(qh, vertex->point)];
+
 
          /* 
             Converting cartesian to barycentric coordinates
@@ -188,10 +193,10 @@ void _linear_interp2d_facet(qhT *qh,
          double L3 = 1 - L1 - L2;
          
          // apply barycentric coordinates
-         double f = L1*pval[0] + L2*pval[1] + L3*pval[2];
+         double f = L1*f1 + L2*f2 + L3*f3;
          ipval[idx] = f;
          
-         #ifndef DPRINT
+         #if DPRINT
             printf("point: (%lf, %lf) \n", x, y );
             printf(" -- facet coords:  (%lf, %lf) -> (%lf, %lf)-> (%lf, %lf) \n", 
                    x1, y1, x2, y2, x3, y3);
@@ -206,14 +211,14 @@ void _linear_interp2d_facet(qhT *qh,
       
          ipval[idx] = fill_value;
          
-         #ifndef DPRINT
+         #if DPRINT
             printf("OUTSIDE point: (%lf, %lf) \n", x, y );
             printf(" -- fill value: %lf \n", fill_value);
          #endif
       }
       
    } // end for
-    
+   
 }
 
 
@@ -224,12 +229,10 @@ void _linear_interp2d_facet(qhT *qh,
 */
 void _print_all_facets(qhT *qh)
 {
-
-   facetT *facet;
-   vertexT *vertex;
    
-   // Iterating through all valid triangles
-   facet = qh->facet_list;
+   facetT *facet = qh->facet_list;
+   vertexT *vertex;
+      
    unsigned int ct = 0;
    while (facet->id != 0) {
 
@@ -239,20 +242,20 @@ void _print_all_facets(qhT *qh)
       printf("\nfacet id: %u,  count: %u \n", facet->id, ct);
       
       vertex = facet->vertices->e[0].p;
-      printf("0 vertex coords: %lf, %lf  \n", vertex->point[0], vertex->point[1]);
+      printf("vertex 0: %lf, %lf  \n", vertex->point[0], vertex->point[1]);
 
       vertex = facet->vertices->e[1].p;
-      printf("1 vertex coords: %lf, %lf  \n", vertex->point[0], vertex->point[1]);
+      printf("vertex 1: %lf, %lf  \n", vertex->point[0], vertex->point[1]);
 
       vertex = facet->vertices->e[2].p;
-      printf("2 vertex coords: %lf, %lf  \n", vertex->point[0], vertex->point[1]);
+      printf("vertex 2: %lf, %lf  \n", vertex->point[0], vertex->point[1]);
 
       ct = ct + 1;
     }
     facet = facet->next;
     
-   }
-  
+   } // end while
+
 }
 
 
