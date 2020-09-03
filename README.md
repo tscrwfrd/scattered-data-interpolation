@@ -23,3 +23,9 @@ The following is necessary to use SDI
 For QHull, run basic generic makefile with default settings.  Once compiled, SDI needs to know how to include "qhull_ra.h"
 and link .so files libqhullstatic_r, libqhullstatic, and qhull_r.
 
+## Future work
+- Different grid interpolation procedures
+- 3D convex hulls and interpolation procedures
+- possible optimization applications
+- Unit test cases
+
