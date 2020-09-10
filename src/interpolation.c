@@ -1,6 +1,7 @@
 #include "../include/interpolation.h"
 #define CMDOPTS 50
 #define DIMS2D 2
+#define DIMS2D 3
 #define DPRINT 0
 
 
@@ -117,11 +118,11 @@ int _qhull_QVnd(double* points,
 /**
  * Linear interpolation using barycentric coordinates
  *
- * @param qh      qhull reference
- * @param ipoints    array of 2D interpolated points coordinates 
- * @param ipval    array of 2D interpolated points values
- * @param inum_pts   number of 2D interpolated points (values & points)
- * @param pval   array of values for each 2D points
+ * @param qh qhull reference
+ * @param ipoints array of 2D interpolated points coordinates 
+ * @param ipval  array of 2D interpolated points values
+ * @param inum_pts number of 2D interpolated points (values & points)
+ * @param pval array of values for each 2D points
  * @param fill_value fill value for points outisde convex hull
  */
 void _linear_interp2d_facet(qhT *qh, 
@@ -214,6 +215,123 @@ void _linear_interp2d_facet(qhT *qh,
             printf(" -- fill value: %lf \n", fill_value);
          #endif
       }
+      
+   } // end for
+   
+}
+
+
+/**
+ * Linear interpolation using barycentric coordinates
+ *
+ * @param qh      qhull reference
+ * @param ipoints    array of 3D interpolated points coordinates 
+ * @param ipval    array of 3D interpolated points values
+ * @param inum_pts   number of 3D interpolated points (values & points)
+ * @param pval   array of values for each 3D points
+ * @param fill_value fill value for points outisde convex hull
+ */
+void _linear_interp3d_facet(qhT *qh, 
+                            double* ipoints, 
+                            double* ipval,
+                            int inum_pts, 
+                            double* pval,
+                            double fill_value)
+{
+   facetT *facet;
+   vertexT *vertex;
+   coordT single_point[3];
+   realT bestdist;
+   boolT isoutside;
+   int ncoords = inum_pts*3;
+
+   for(int i = 0; i < ncoords; i+=3 ){
+   
+      single_point[0] = ipoints[i];
+      single_point[1] = ipoints[i+1];
+      single_point[2] = ipoints[i+2];
+      int idx = i/3;
+
+      // bumps-up dimension to calculate projections
+      qh_setdelaunay(qh, DIMS3D+1, 1, single_point);
+   
+      // find facet that contains point
+      facet = qh_findbestfacet(qh, single_point, True, &bestdist, &isoutside);
+      
+      if (isoutside > 0){
+      
+         double x = single_point[0];
+         double y = single_point[1];
+
+         vertex = facet->vertices->e[0].p;
+         double x1 = vertex->point[0];
+         double y1 = vertex->point[1];
+         double z1 = vertex->point[2];
+         double f1 = pval[qh_pointid(qh, vertex->point)];
+
+         vertex = facet->vertices->e[1].p;
+         double x2 = vertex->point[0];
+         double y2 = vertex->point[1];
+         double z2 = vertex->point[2];
+         double f2 = pval[qh_pointid(qh, vertex->point)];
+
+         vertex = facet->vertices->e[2].p;
+         double x3 = vertex->point[0];
+         double y3 = vertex->point[1];
+         double z3 = vertex->point[2];
+         double f3 = pval[qh_pointid(qh, vertex->point)];
+
+         vertex = facet->vertices->e[3].p;
+         double x4 = vertex->point[0];
+         double y4 = vertex->point[1];
+         double z4 = vertex->point[2];
+         double f4 = pval[qh_pointid(qh, vertex->point)];
+
+
+         /* 
+            Converting cartesian to barycentric coordinates
+            https://en.wikipedia.org/wiki/Barycentric_coordinate_system#In_dimension_three
+            
+            denomr = ((y2-y3)*(x1-x3) + (x3-x2)*(y1-y3))
+            L1 = ((y2-y3)*(x-x3) + (x3-x2)*(y-y3)) / denomr
+            L2 = ((y3-y1)*(x-x3) + (x1-x3)*(y-y3)) / denomr
+            L3 = 1.0 - L1 - L2
+         */
+         
+      //    double denom = y2*x1 - y2*x3 -y3*x1 + x3*y1 - x2*y1 + x2*y3;
+
+      //    double L1 = y2*x - y2*x3 - y3*x + x3*y - x2*y + x2*y3;
+      //    L1 = L1 / denom;
+
+      //    double L2 = y3*x - y1*x + y1*x3 + x1*y - x1*y3 - x3*y;
+      //    L2 = L2 / denom;
+
+      //    double L3 = 1 - L1 - L2;
+         
+      //    // apply barycentric coordinates
+      //    double f = L1*f1 + L2*f2 + L3*f3;
+      //    ipval[idx] = f;
+         
+      //    #if DPRINT
+      //       printf("point: (%lf, %lf) \n", x, y );
+      //       printf(" -- facet coords:  (%lf, %lf) -> (%lf, %lf)-> (%lf, %lf) \n", 
+      //              x1, y1, x2, y2, x3, y3);
+      //       printf(" -- LAMDA: %lf, %lf, %lf \n", L1, L2, L3);
+      //       printf(" -- interpolated value: %lf \n", f);
+      //    #endif
+     
+      // } else {
+      
+      //    ipval[idx] = fill_value;
+         
+      //    #if DPRINT
+      //       double x = single_point[0];
+      //       double y = single_point[1];
+      //       printf("OUTSIDE point: (%lf, %lf) \n", x, y );
+      //       printf(" -- fill value: %lf \n", fill_value);
+      //    #endif
+      }
+
       
    } // end for
    
